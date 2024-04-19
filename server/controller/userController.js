@@ -2,12 +2,12 @@ const expressAsyncHandler = require("express-async-handler");
 const User = require("../Models/userSchema");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
+const dotenv = require("dotenv").config();
 
 // @Desc Register a user
 // @Route /api/user/register
 // @Access public
 const registerUser = expressAsyncHandler(async (req, res) => {
-    console.log(req.body);
     const { email, username, password } = req.body;
     if (!email || !username || !password) {
         res.status(400).json({ message: "All fields are mandatory to be filled." });
@@ -19,19 +19,19 @@ const registerUser = expressAsyncHandler(async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ email, username, password: hashedPassword });
-    res.status(201).json({ message: "User Created Sucessfully" }, { user });
+    res.status(201).json({ user });
 });
 
 // @Desc login user
 // @Route /api/user/login
 // @access public
 
-const loginUser = expressAsyncHandler(async () => {
+const loginUser = expressAsyncHandler(async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
         res.status(400).json({ message: "username and password is mandatory" })
     }
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ username });
     if (user && await bcrypt.compare(password, user.password)) {
         const accessToken = jwt.sign({
             user: {
