@@ -40,7 +40,7 @@ export const Register = () => {
           type="email"
           name="email"
           id="email"
-          className="w-full p-2 mb-4 border-2 rounded-md text-xl active:border-blue-400"
+          className="w-full p-2 mb-4 border-2 rounded-md text-lg active:border-blue-400"
           placeholder="Email"
           value={user.email}
           onChange={handleChange}
@@ -49,7 +49,7 @@ export const Register = () => {
           type="text"
           name="username"
           id="username"
-          className="w-full p-2 mb-4 border-2 rounded-md text-xl active:border-blue-400"
+          className="w-full p-2 mb-4 border-2 rounded-md text-lg active:border-blue-400"
           placeholder="Username"
           value={user.username}
           onChange={handleChange}
@@ -58,13 +58,13 @@ export const Register = () => {
           type="password"
           name="password"
           id="password"
-          className="w-full p-2 mb-8 border-2 rounded-md text-xl active:border-blue-400"
+          className="w-full p-2 mb-8 border-2 rounded-md text-lg active:border-blue-400"
           placeholder="Password"
           value={user.password}
           onChange={handleChange}
         />
         <button
-          className="w-full bg-blue-500 p-2 mb-8 text-white text-xl hover:bg-blue-799"
+          className="w-full bg-blue-500 font-bold p-2 mb-8 text-white text-xl hover:bg-blue-700"
           onClick={handleRegisterUser}
         >
           Register

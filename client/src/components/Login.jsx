@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { UserInfoContext } from "../contexts/UserInfoContext";
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -7,7 +8,7 @@ export const Login = () => {
     username: "",
     password: "",
   });
-
+  const { setUserInfo } = useContext(UserInfoContext);
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
@@ -23,8 +24,10 @@ export const Login = () => {
         body: JSON.stringify(user),
       });
       if (response.ok) {
-        const result = await response.json();
-        console.log(result);
+        const { user, accessToken } = await response.json();
+        localStorage.setItem("Token", accessToken);
+        setUserInfo(user);
+        navigate("/");
       }
     } catch (error) {
       console.log("Error occured while loggin in a user: ", error);
@@ -41,7 +44,7 @@ export const Login = () => {
           type="text"
           name="username"
           id="username"
-          className="w-full p-2 mb-4 border-2 rounded-md text-xl active:border-blue-400"
+          className="w-full p-2 mb-4 border-2 rounded-md text-lg active:border-blue-400"
           placeholder="Username"
           value={user.username}
           onChange={handleChange}
@@ -50,16 +53,16 @@ export const Login = () => {
           type="password"
           name="password"
           id="password"
-          className="w-full p-2 mb-4 border-2 rounded-md text-xl active:border-blue-400"
+          className="w-full p-2 mb-4 border-2 rounded-md text-lg active:border-blue-400"
           placeholder="Password"
           value={user.password}
           onChange={handleChange}
         />
         <button
-          className="w-full bg-blue-500 p-2 my-8 text-white text-xl hover:bg-blue-799"
+          className="w-full bg-blue-500 p-2 my-8 font-bold text-white text-xl hover:bg-blue-700"
           onClick={handleLogin}
         >
-          Register
+          Login
         </button>
         <p className="font-md text-white ">
           Not Registered Yet?{" "}
