@@ -13,6 +13,8 @@ const ChatMembers = (props) => {
   const { selectedId, setSelectedId } = useContext(UserSelectionContext);
   const onlinePeopleExcludingUser = { ...onlinePeople };
   delete onlinePeopleExcludingUser[userInfo._id];
+  console.log(userInfo._id);
+  console.log(onlinePeopleExcludingUser[userInfo._id]);
   console.log(onlinePeopleExcludingUser);
   return (
     <div>
@@ -27,7 +29,7 @@ const ChatMembers = (props) => {
               (selectedId === userId ? "bg-blue-50" : "")
             }
           >
-            <Avatar username={onlinePeople[userId]} userId={userId} />
+            {/* <Avatar username={onlinePeople[userId]} userId={userId} /> */}
             <div className="">{onlinePeople[userId]}</div>
           </div>
         ))}
