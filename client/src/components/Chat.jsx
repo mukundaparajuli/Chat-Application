@@ -39,8 +39,8 @@ const Chat = () => {
       console.log(messageData);
       if ("online" in messageData) {
         showOnlinePeople(messageData.online);
-      } else if ("messageData" in messageData) {
-        console.log("Received message:", messageData.messageData);
+      } else if ("message" in messageData) {
+        console.log("Received message:", messageData.message);
         // Handle incoming message (messageData.messageData contains the actual message)
       } else {
         console.error("Received unexpected message:", messageData);

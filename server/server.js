@@ -49,25 +49,22 @@ wss.on('connection', (connection, req) => {
     connection.on('message', (message) => {
         [...wss.clients].forEach(c => console.log(c.userId));
         try {
-            const messageData = JSON.parse(message.toString());
+            const messageDatas = JSON.parse(message.toString());
             console.log("Received raw message:", message.toString());
-            console.log("Parsed message:", messageData);
+            console.log("Parsed message:", messageDatas);
 
             // Check if messageData has the expected structure
-            if (messageData) {
-                const { recipient, textMessage } = messageData;
+            if (messageDatas) {
+                const { recipient, textMessage } = messageDatas;
                 // Filter clients and send message
                 [...wss.clients]
                     // .filter(c => c.userId === recipient)
-                    // .forEach(c => c.send(JSON.stringify(c.messageData)));
-                    .forEach(client => {
-                        client.send(JSON.stringify({
-                            online: [...wss.clients].map(c => ({ message: c.messageData }))
-                        }))
-                    });
-                console.log("Received message:", messageData);
+                    .forEach(c => c.send(JSON.stringify({
+                        message: [...wss.clients].map(c => (messageDatas))
+                    })));
+                console.log("Received message:", messageDatas);
             } else {
-                console.error("Invalid message data:", messageData);
+                console.error("Invalid message data:", messageDatas);
             }
         } catch (error) {
             console.error("Error parsing WebSocket message:", error);
