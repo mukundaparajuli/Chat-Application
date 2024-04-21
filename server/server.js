@@ -8,7 +8,8 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const ws = require("ws");
 const jwt = require("jsonwebtoken");
-const { connection } = require("mongoose");
+const Message = require("./Models/messageSchema");
+const mongoose = require("mongoose");
 
 databaseConnection();
 
@@ -46,7 +47,7 @@ wss.on('connection', (connection, req) => {
     });
 
     // Handle incoming messages
-    connection.on('message', (message) => {
+    connection.on('message', async (message) => {
         [...wss.clients].forEach(c => console.log(c.userId));
         try {
             const messageDatas = JSON.parse(message.toString());
@@ -56,11 +57,19 @@ wss.on('connection', (connection, req) => {
             // Check if messageData has the expected structure
             if (messageDatas) {
                 const { recipient, textMessage } = messageDatas;
+                console.log(recipient, textMessage)
                 // Filter clients and send message
+                const messageDocumented = await Message.create({
+                    sender: connection.userId,
+                    recipient: recipient,
+                    message: textMessage,
+                });
                 [...wss.clients]
                     // .filter(c => c.userId === recipient)
                     .forEach(c => c.send(JSON.stringify({
                         message: [...wss.clients].map(c => (messageDatas))
+                        , sender: connection.userId,
+                        id: messageDocumented._id,
                     })));
                 console.log("Received message:", messageDatas);
             } else {

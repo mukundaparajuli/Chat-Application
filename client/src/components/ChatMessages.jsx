@@ -1,9 +1,13 @@
 import { useContext, useState } from "react";
-import { UserSelectionContext } from "../contexts/UserInfoContext";
-
+import {
+  MessageToDisplayContext,
+  UserSelectionContext,
+} from "../contexts/UserInfoContext";
+import { uniqBy } from "lodash";
 const ChatMessages = ({ ws }) => {
   const { selectedId } = useContext(UserSelectionContext);
   const [newMessageText, setNewMessageText] = useState("");
+  const { message, setMessage } = useContext(MessageToDisplayContext);
 
   const handleMessageSubmit = (ev) => {
     ev.preventDefault();
@@ -21,6 +25,10 @@ const ChatMessages = ({ ws }) => {
             },
           })
         );
+        setMessage((prev) => [
+          ...prev,
+          { text: newMessageText, isMsgOurs: true },
+        ]); // Store message text and flag
         console.log("Sent message:", newMessageText);
 
         // Clear the input after sending the message
@@ -32,7 +40,7 @@ const ChatMessages = ({ ws }) => {
       console.error("Message text is empty!");
     }
   };
-
+  const messagesWithoutDups = uniqBy(message, "id");
   return (
     <div className="relative flex flex-col h-screen">
       <div className="flex-grow">
@@ -42,9 +50,22 @@ const ChatMessages = ({ ws }) => {
           </div>
         )}
       </div>
+      {/* {!!selectedId && ( */}
+      <div>
+        {messagesWithoutDups.map((messageItem, index) => (
+          <div
+            key={index}
+            className={messageItem.isMsgOurs ? "text-right" : "text-left"}
+          >
+            {console.log(messageItem.isMsgOurs)}
+            {messageItem.text}
+          </div>
+        ))}
+      </div>
+      {/* )} */}
       {!!selectedId && (
         <form onSubmit={handleMessageSubmit}>
-          <div className="absolute bottom-0 left-0 right-0 p-2 flex items-center">
+          <div className="bottom-0 left-0 right-0 p-2 flex items-center">
             <input
               type="text"
               name="message"

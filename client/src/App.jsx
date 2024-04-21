@@ -3,6 +3,7 @@ import { Register } from "./components/Register";
 import { Login } from "./components/Login";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import {
+  MessageToDisplayContext,
   UserInfoContext,
   UserSelectionContext,
 } from "./contexts/UserInfoContext";
@@ -13,6 +14,7 @@ import ProtectedRoutes from "./utils/ProtectedRoutes";
 function App() {
   const [userInfo, setUserInfo] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
+  const [message, setMessage] = useState([]);
   const router = createBrowserRouter([
     {
       path: "/register",
@@ -35,7 +37,9 @@ function App() {
     <div>
       <UserInfoContext.Provider value={{ userInfo, setUserInfo }}>
         <UserSelectionContext.Provider value={{ selectedId, setSelectedId }}>
-          <RouterProvider router={router} />
+          <MessageToDisplayContext.Provider value={{ message, setMessage }}>
+            <RouterProvider router={router} />
+          </MessageToDisplayContext.Provider>
         </UserSelectionContext.Provider>
       </UserInfoContext.Provider>
     </div>

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import ChatMembers from "./ChatMembers";
 import ChatMessages from "./ChatMessages";
+import { MessageToDisplayContext } from "../contexts/UserInfoContext";
 
 const Chat = () => {
   const [ws, setWs] = useState(null);
   const [onlinePeople, setOnlinePeople] = useState({});
+  const { setMessage } = useContext(MessageToDisplayContext);
 
   const showOnlinePeople = (peopleArray) => {
     const people = {};
@@ -24,28 +26,27 @@ const Chat = () => {
     };
     ws.addEventListener("message", (ev) => {
       const messageData = JSON.parse(ev.data);
-      console.log(messageData);
+      console.log({ messageData, ev });
+      console.log(messageData.message);
       if ("online" in messageData) {
         showOnlinePeople(messageData.online);
-      } else if ("messageData" in messageData) {
-        console.log("Received message:", messageData.messageData);
+      } else if ("message" in messageData) {
+        console.log(
+          "Received message:",
+          messageData.message[0].message.textMessage
+        );
+        setMessage((prev) => [
+          ...prev,
+          {
+            text: messageData.message[0].message.textMessage,
+            isMsgOurs: false, // This should be false for received messages
+          },
+        ]);
         // Handle incoming message (messageData.messageData contains the actual message)
       } else {
         console.error("Received unexpected message:", messageData);
       }
     });
-    ws.onmessage = (ev) => {
-      const messageData = JSON.parse(ev.data);
-      console.log(messageData);
-      if ("online" in messageData) {
-        showOnlinePeople(messageData.online);
-      } else if ("message" in messageData) {
-        console.log("Received message:", messageData.message);
-        // Handle incoming message (messageData.messageData contains the actual message)
-      } else {
-        console.error("Received unexpected message:", messageData);
-      }
-    };
 
     ws.onclose = () => {
       console.log("WebSocket connection closed");
