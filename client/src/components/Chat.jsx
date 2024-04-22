@@ -1,12 +1,19 @@
+// Chat.js
 import { useContext, useEffect, useState } from "react";
 import ChatMembers from "./ChatMembers";
 import ChatMessages from "./ChatMessages";
-import { MessageToDisplayContext } from "../contexts/UserInfoContext";
+import {
+  MessageToDisplayContext,
+  UserInfoContext,
+  UserSelectionContext,
+} from "../contexts/UserInfoContext";
 
 const Chat = () => {
+  const { selectedId } = useContext(UserSelectionContext);
   const [ws, setWs] = useState(null);
   const [onlinePeople, setOnlinePeople] = useState({});
   const { setMessage } = useContext(MessageToDisplayContext);
+  const { userInfo } = useContext(UserInfoContext);
 
   const showOnlinePeople = (peopleArray) => {
     const people = {};
@@ -26,23 +33,21 @@ const Chat = () => {
     };
     ws.addEventListener("message", (ev) => {
       const messageData = JSON.parse(ev.data);
-      console.log({ messageData, ev });
-      console.log(messageData.message);
       if ("online" in messageData) {
         showOnlinePeople(messageData.online);
       } else if ("message" in messageData) {
-        console.log(
-          "Received message:",
-          messageData.message[0].message.textMessage
-        );
-        setMessage((prev) => [
-          ...prev,
-          {
-            text: messageData.message[0].message.textMessage,
-            isMsgOurs: false, // This should be false for received messages
-          },
-        ]);
-        // Handle incoming message (messageData.messageData contains the actual message)
+        if (messageData.sender !== userInfo._id) {
+          setMessage((prev) => [
+            ...prev,
+            {
+              text: messageData.message[0].message.textMessage,
+              isMsgOurs: false,
+              sender: messageData.sender,
+              myId: userInfo._id,
+              _id: Date.now(),
+            },
+          ]);
+        }
       } else {
         console.error("Received unexpected message:", messageData);
       }

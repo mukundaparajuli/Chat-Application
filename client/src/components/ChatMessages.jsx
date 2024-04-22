@@ -1,22 +1,22 @@
+// ChatMessages.js
 import { useContext, useState } from "react";
 import {
   MessageToDisplayContext,
+  UserInfoContext,
   UserSelectionContext,
 } from "../contexts/UserInfoContext";
 import { uniqBy } from "lodash";
+
 const ChatMessages = ({ ws }) => {
   const { selectedId } = useContext(UserSelectionContext);
   const [newMessageText, setNewMessageText] = useState("");
   const { message, setMessage } = useContext(MessageToDisplayContext);
+  const { userInfo } = useContext(UserInfoContext);
 
   const handleMessageSubmit = (ev) => {
     ev.preventDefault();
-    // Check if the message is not empty
     if (newMessageText.trim() !== "") {
-      // Check if the WebSocket connection is open
       if (ws.readyState === WebSocket.OPEN) {
-        // Send the message
-        console.log("sending...");
         ws.send(
           JSON.stringify({
             message: {
@@ -27,11 +27,14 @@ const ChatMessages = ({ ws }) => {
         );
         setMessage((prev) => [
           ...prev,
-          { text: newMessageText, isMsgOurs: true },
-        ]); // Store message text and flag
-        console.log("Sent message:", newMessageText);
-
-        // Clear the input after sending the message
+          {
+            text: newMessageText,
+            isMsgOurs: true,
+            sender: userInfo._id,
+            myId: userInfo._id,
+            _id: Date.now(),
+          },
+        ]);
         setNewMessageText("");
       } else {
         console.error("WebSocket is not open!");
@@ -40,7 +43,9 @@ const ChatMessages = ({ ws }) => {
       console.error("Message text is empty!");
     }
   };
-  const messagesWithoutDups = uniqBy(message, "id");
+
+  const messagesWithoutDupes = uniqBy(message, "_id");
+
   return (
     <div className="relative flex flex-col h-screen">
       <div className="flex-grow">
@@ -50,19 +55,28 @@ const ChatMessages = ({ ws }) => {
           </div>
         )}
       </div>
-      {/* {!!selectedId && ( */}
-      <div>
-        {messagesWithoutDups.map((messageItem, index) => (
-          <div
-            key={index}
-            className={messageItem.isMsgOurs ? "text-right" : "text-left"}
-          >
-            {console.log(messageItem.isMsgOurs)}
-            {messageItem.text}
-          </div>
-        ))}
-      </div>
-      {/* )} */}
+      {!!selectedId && (
+        <div>
+          {messagesWithoutDupes.map((messageItem, index) => (
+            <div
+              key={index}
+              className={
+                messageItem.isMsgOurs === true
+                  ? "text-right bg-blue-700 text-white"
+                  : "text-left"
+              }
+            >
+              Text: {messageItem.text}
+              <br />
+              Recipient: {messageItem.recipient}
+              <br />
+              Sender: {messageItem.sender}
+              <br />
+              My Id: {messageItem.myId}
+            </div>
+          ))}
+        </div>
+      )}
       {!!selectedId && (
         <form onSubmit={handleMessageSubmit}>
           <div className="bottom-0 left-0 right-0 p-2 flex items-center">

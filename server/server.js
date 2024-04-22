@@ -1,3 +1,4 @@
+// server.js
 const express = require("express");
 const app = express();
 const dotenv = require("dotenv").config();
@@ -41,12 +42,11 @@ wss.on('connection', (connection, req) => {
             connection.username = username;
         })
     }
-    // Handle errors
+
     connection.on('error', (error) => {
         console.error("WebSocket connection error:", error);
     });
 
-    // Handle incoming messages
     connection.on('message', async (message) => {
         [...wss.clients].forEach(c => console.log(c.userId));
         try {
@@ -54,23 +54,25 @@ wss.on('connection', (connection, req) => {
             console.log("Received raw message:", message.toString());
             console.log("Parsed message:", messageDatas);
 
-            // Check if messageData has the expected structure
             if (messageDatas) {
                 const { recipient, textMessage } = messageDatas;
                 console.log(recipient, textMessage)
-                // Filter clients and send message
                 const messageDocumented = await Message.create({
                     sender: connection.userId,
                     recipient: recipient,
                     message: textMessage,
                 });
                 [...wss.clients]
-                    // .filter(c => c.userId === recipient)
-                    .forEach(c => c.send(JSON.stringify({
-                        message: [...wss.clients].map(c => (messageDatas))
-                        , sender: connection.userId,
-                        id: messageDocumented._id,
-                    })));
+                    .forEach(c => {
+                        if (c !== connection) {
+                            c.send(JSON.stringify({
+                                message: [...wss.clients].map(c => (messageDatas)),
+                                sender: connection.userId,
+                                id: messageDocumented._id,
+                                recipient: recipient,
+                            }))
+                        }
+                    });
                 console.log("Received message:", messageDatas);
             } else {
                 console.error("Invalid message data:", messageDatas);
@@ -79,9 +81,6 @@ wss.on('connection', (connection, req) => {
             console.error("Error parsing WebSocket message:", error);
         }
     });
-
-
-    // Notify other clients about the new connection
 
     console.log([...wss.clients].user);
     [...wss.clients].forEach(client => {
