@@ -1,5 +1,4 @@
-// ChatMessages.js
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect, useRef } from "react";
 import {
   MessageToDisplayContext,
   UserInfoContext,
@@ -12,6 +11,17 @@ const ChatMessages = ({ ws }) => {
   const [newMessageText, setNewMessageText] = useState("");
   const { message, setMessage } = useContext(MessageToDisplayContext);
   const { userInfo } = useContext(UserInfoContext);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [message]);
 
   const handleMessageSubmit = (ev) => {
     ev.preventDefault();
@@ -31,6 +41,7 @@ const ChatMessages = ({ ws }) => {
             text: newMessageText,
             isMsgOurs: true,
             sender: userInfo._id,
+            recipient: selectedId,
             myId: userInfo._id,
             _id: Date.now(),
           },
@@ -45,9 +56,9 @@ const ChatMessages = ({ ws }) => {
   };
 
   const messagesWithoutDupes = uniqBy(message, "_id");
-
+  // console.log(message[0]);
   return (
-    <div className="relative flex flex-col h-screen">
+    <div className="relative flex flex-col h-full">
       <div className="flex-grow">
         {!selectedId && (
           <div className="h-full flex items-center justify-center text-lg text-slate-600">
@@ -55,31 +66,43 @@ const ChatMessages = ({ ws }) => {
           </div>
         )}
       </div>
+      {console.log(message[0])}
       {!!selectedId && (
-        <div>
-          {messagesWithoutDupes.map((messageItem, index) => (
-            <div
-              key={index}
-              className={
-                messageItem.isMsgOurs === true
-                  ? "text-right bg-blue-700 text-white"
-                  : "text-left"
-              }
-            >
-              Text: {messageItem.text}
-              <br />
-              Recipient: {messageItem.recipient}
-              <br />
-              Sender: {messageItem.sender}
-              <br />
-              My Id: {messageItem.myId}
-            </div>
-          ))}
+        <div className="overflow-y-auto flex-grow">
+          {messagesWithoutDupes.map((messageItem, index) => {
+            if (
+              (messageItem.sender === userInfo._id ||
+                messageItem.recipient === userInfo._id) &&
+              (messageItem.sender === selectedId ||
+                messageItem.recipient === selectedId)
+            ) {
+              const isMessageMine = messageItem.sender === userInfo._id;
+              const messageClass = isMessageMine
+                ? "flex justify-end"
+                : "flex justify-start";
+              const messageColor = isMessageMine
+                ? "bg-blue-500 text-white"
+                : "bg-gray-700 text-white";
+
+              return (
+                <div key={index} className={messageClass}>
+                  <div className={`${messageColor} rounded-lg p-3 m-2`}>
+                    <p className="text-lg">{messageItem.text}</p>
+                    <p>Recipient: {messageItem.recipient}</p>
+                    <p>Sender: {messageItem.sender}</p>
+                    <p>My Id: {messageItem.myId}</p>
+                  </div>
+                </div>
+              );
+            } else {
+              return null; // Message doesn't belong to selected user, so don't render it
+            }
+          })}
         </div>
       )}
       {!!selectedId && (
-        <form onSubmit={handleMessageSubmit}>
-          <div className="bottom-0 left-0 right-0 p-2 flex items-center">
+        <form onSubmit={handleMessageSubmit} className="mb-4">
+          <div className=" bottom-0 left-0 right-0 p-2 flex items-center">
             <input
               type="text"
               name="message"

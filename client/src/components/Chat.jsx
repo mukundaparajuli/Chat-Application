@@ -5,11 +5,10 @@ import ChatMessages from "./ChatMessages";
 import {
   MessageToDisplayContext,
   UserInfoContext,
-  UserSelectionContext,
 } from "../contexts/UserInfoContext";
 
 const Chat = () => {
-  const { selectedId } = useContext(UserSelectionContext);
+  // const { selectedId } = useContext(UserSelectionContext);
   const [ws, setWs] = useState(null);
   const [onlinePeople, setOnlinePeople] = useState({});
   const { setMessage } = useContext(MessageToDisplayContext);
@@ -36,18 +35,19 @@ const Chat = () => {
       if ("online" in messageData) {
         showOnlinePeople(messageData.online);
       } else if ("message" in messageData) {
-        if (messageData.sender !== userInfo._id) {
-          setMessage((prev) => [
-            ...prev,
-            {
-              text: messageData.message[0].message.textMessage,
-              isMsgOurs: false,
-              sender: messageData.sender,
-              myId: userInfo._id,
-              _id: Date.now(),
-            },
-          ]);
-        }
+        console.log(messageData);
+        setMessage((prev) => [
+          ...prev,
+          {
+            text: messageData.message[0].message.textMessage,
+            isMsgOurs: false,
+            sender: messageData.sender,
+            recipient: messageData.recipient,
+            myId: userInfo._id,
+            _id: Date.now(),
+          },
+        ]);
+        // }
       } else {
         console.error("Received unexpected message:", messageData);
       }

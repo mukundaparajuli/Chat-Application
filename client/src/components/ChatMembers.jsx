@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import Avatar from "./Avatar";
 import Logo from "./Logo";
 import {
@@ -26,10 +26,12 @@ const ChatMembers = (props) => {
             key={userId}
             className={
               "flex gap-2 px-4 items-center p-2 mb-2 m-2 font-semibold text-xl shadow-sm cursor-pointer " +
-              (selectedId === userId ? "bg-blue-50" : "")
+              (selectedId === userId
+                ? "bg-blue-50 border-l-4 border-blue-700 rounded-sm"
+                : "")
             }
           >
-            {/* <Avatar username={onlinePeople[userId]} userId={userId} /> */}
+            <Avatar username={onlinePeople[userId]} userId={userId} />
             <div className="">{onlinePeople[userId]}</div>
           </div>
         ))}

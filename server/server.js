@@ -56,12 +56,12 @@ wss.on('connection', (connection, req) => {
 
             if (messageDatas) {
                 const { recipient, textMessage } = messageDatas;
-                console.log(recipient, textMessage)
                 const messageDocumented = await Message.create({
                     sender: connection.userId,
-                    recipient: recipient,
-                    message: textMessage,
+                    recipient: messageDatas.message.recipient,
+                    message: messageDatas.message.textMessage,
                 });
+                console.log(messageDocumented);
                 [...wss.clients]
                     .forEach(c => {
                         if (c !== connection) {
@@ -69,7 +69,7 @@ wss.on('connection', (connection, req) => {
                                 message: [...wss.clients].map(c => (messageDatas)),
                                 sender: connection.userId,
                                 id: messageDocumented._id,
-                                recipient: recipient,
+                                recipient: messageDatas.message.recipient,
                             }))
                         }
                     });
