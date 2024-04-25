@@ -8,9 +8,9 @@ const Message = require("../Models/messageSchema");
 const getMessages = expressAsyncHandler(async (req, res) => {
     const userId = req.params.id;
     const ourUserId = await req.user.userId;
-    console.log(userId, ourUserId)
+    console.log(`"UserId:"${userId},"ourUserId": ${ourUserId}`)
     const messages = await Message.find({
-        sender: { $in: [userId] },
+        sender: { $in: [userId, ourUserId] },
         recipient: { $in: [userId, ourUserId] },
     }).sort({ createdAt: 1 });
     console.log(messages)

@@ -12,6 +12,9 @@ const messageSchema = new mongoose.Schema({
     },
     message: {
         type: String,
+    },
+    myId: {
+        type: mongoose.Schema.Types.ObjectId,
     }
 }, { timestamps: true });
 

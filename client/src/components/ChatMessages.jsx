@@ -38,11 +38,11 @@ const ChatMessages = ({ ws }) => {
         setMessage((prev) => [
           ...prev,
           {
-            text: newMessageText,
-            isMsgOurs: true,
+            message: newMessageText,
+            // isMsgOurs: true,
             sender: userInfo._id,
             recipient: selectedId,
-            myId: userInfo._id,
+            // myId: userInfo._id,
             _id: Date.now(),
           },
         ]);
@@ -57,27 +57,35 @@ const ChatMessages = ({ ws }) => {
 
   const messagesWithoutDupes = uniqBy(message, "_id");
 
-  const fetchMessages = async () => {
-    const token = localStorage.getItem("Token");
-    const response = await fetch(
-      `https://localhost/5000/api/messages/${selectedId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+  // const fetchMessages = async () => {
+  //   console.log(selectedId);
+  //   const token = localStorage.getItem("Token");
+  //   try {
+  //     const response = await fetch(
+  //       `http://localhost:5000/api/messages/${selectedId}`,
+  //       {
+  //         method: "GET",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+  //     // console.log(response);
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setMessage(data);
+  //       console.log(data);
+  //     } else {
+  //       console.log(response);
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
-    if (response.ok) {
-      const data = await response.json();
-      console.log(data);
-    }
-  };
-
-  useEffect(() => {
-    fetchMessages();
-  }, [selectedId]);
+  // useEffect(() => {
+  //   fetchMessages();
+  // }, [selectedId]);
   return (
     <div className="relative flex flex-col h-full">
       <div className="flex-grow">
@@ -87,7 +95,7 @@ const ChatMessages = ({ ws }) => {
           </div>
         )}
       </div>
-      {console.log(message[0])}
+      {console.log(message)}
       {!!selectedId && (
         <div className="overflow-y-auto flex-grow">
           {messagesWithoutDupes.map((messageItem, index) => {
@@ -108,15 +116,15 @@ const ChatMessages = ({ ws }) => {
               return (
                 <div key={index} className={messageClass}>
                   <div className={`${messageColor} rounded-lg p-3 m-2`}>
-                    <p className="text-lg">{messageItem.text}</p>
+                    <p className="text-lg">{messageItem.message}</p>
                     <p>Recipient: {messageItem.recipient}</p>
                     <p>Sender: {messageItem.sender}</p>
-                    <p>My Id: {messageItem.myId}</p>
+                    {/* <p>My Id: {messageItem._id}</p> */}
                   </div>
                 </div>
               );
             } else {
-              return null; // Message doesn't belong to selected user, so don't render it
+              return null;
             }
           })}
         </div>

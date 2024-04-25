@@ -1,18 +1,18 @@
-// Chat.js
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import ChatMembers from "./ChatMembers";
 import ChatMessages from "./ChatMessages";
 import {
   MessageToDisplayContext,
   UserInfoContext,
+  UserSelectionContext,
 } from "../contexts/UserInfoContext";
 
 const Chat = () => {
-  // const { selectedId } = useContext(UserSelectionContext);
   const [ws, setWs] = useState(null);
   const [onlinePeople, setOnlinePeople] = useState({});
   const { setMessage } = useContext(MessageToDisplayContext);
   const { userInfo } = useContext(UserInfoContext);
+  const { selectedId } = useContext(UserSelectionContext);
 
   const showOnlinePeople = (peopleArray) => {
     const people = {};
@@ -22,50 +22,82 @@ const Chat = () => {
     setOnlinePeople(people);
   };
 
-  useEffect(() => {
+  const handleMessage = (ev) => {
+    const messageData = JSON.parse(ev.data);
+    if ("online" in messageData) {
+      showOnlinePeople(messageData.online);
+    } else if ("message" in messageData) {
+      setMessage((prev) => [
+        ...prev,
+        {
+          message: messageData.message[0].message.textMessage,
+          sender: messageData.sender,
+          recipient: messageData.recipient,
+          // myId: userInfo._id,
+          _id: Date.now(),
+        },
+      ]);
+    }
+  };
+
+  const connect = useCallback(() => {
     const token = localStorage.getItem("Token");
-    const ws = new WebSocket(`ws://localhost:5000?token=${token}`);
-    setWs(ws);
+    const newWs = new WebSocket(`ws://localhost:5000?token=${token}`);
+    setWs(newWs);
 
-    ws.onopen = () => {
-      console.log("WebSocket connected");
-    };
-    ws.addEventListener("message", (ev) => {
-      const messageData = JSON.parse(ev.data);
-      if ("online" in messageData) {
-        showOnlinePeople(messageData.online);
-      } else if ("message" in messageData) {
-        console.log(messageData);
-        setMessage((prev) => [
-          ...prev,
-          {
-            text: messageData.message[0].message.textMessage,
-            isMsgOurs: false,
-            sender: messageData.sender,
-            recipient: messageData.recipient,
-            myId: userInfo._id,
-            _id: Date.now(),
-          },
-        ]);
-        // }
-      } else {
-        console.error("Received unexpected message:", messageData);
-      }
-    });
+    newWs.addEventListener("message", handleMessage);
+    newWs.addEventListener("close", handleConnectionClose);
+    newWs.addEventListener("error", handleConnectionError);
 
-    ws.onclose = () => {
-      console.log("WebSocket connection closed");
-    };
-
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-
-    // Clean up WebSocket connection
     return () => {
-      ws.close();
+      newWs.close();
     };
   }, []);
+
+  useEffect(() => {
+    const cleanup = connect();
+    return cleanup;
+  }, [connect]);
+  // const fetchMessages = async () => {
+  //   console.log(selectedId);
+  //   const token = localStorage.getItem("Token");
+  //   try {
+  //     const response = await fetch(
+  //       `http://localhost:5000/api/messages/${selectedId}`,
+  //       {
+  //         method: "GET",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+  //     // console.log(response);
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setMessage(data);
+  //       console.log(data);
+  //     } else {
+  //       console.log(response);
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   console.log(selectedId);
+  //   fetchMessages();
+  // }, [selectedId]);
+
+  const handleConnectionClose = () => {
+    // Handle WebSocket connection close
+    console.log("WebSocket connection closed");
+  };
+
+  const handleConnectionError = (error) => {
+    // Handle WebSocket connection error
+    console.error("WebSocket error:", error);
+  };
 
   return (
     <div className="flex h-screen w-screen bg-black">
