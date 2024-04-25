@@ -3,7 +3,7 @@ const express = require("express");
 const app = express();
 const dotenv = require("dotenv").config();
 const databaseConnection = require("./config/dbConnection");
-const port = process.env.PORT || 5001;
+const port = process.env.PORT || 5001 || 5555;
 const asyncHandler = require("express-async-handler");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -18,6 +18,7 @@ app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
 app.use("/api/user/", require("./router/userRoute"));
+app.use("/api/", require("./router/messageRoute"));
 
 app.get("/", (req, res) => {
     console.log(req.cookies);
@@ -55,11 +56,11 @@ wss.on('connection', (connection, req) => {
             console.log("Parsed message:", messageDatas);
 
             if (messageDatas) {
-                const { recipient, textMessage } = messageDatas;
+                const { recipient, textMessage } = messageDatas.message;
                 const messageDocumented = await Message.create({
                     sender: connection.userId,
-                    recipient: messageDatas.message.recipient,
-                    message: messageDatas.message.textMessage,
+                    recipient: recipient,
+                    message: textMessage,
                 });
                 console.log(messageDocumented);
                 [...wss.clients]

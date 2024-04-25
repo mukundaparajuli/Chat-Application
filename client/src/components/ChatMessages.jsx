@@ -56,7 +56,28 @@ const ChatMessages = ({ ws }) => {
   };
 
   const messagesWithoutDupes = uniqBy(message, "_id");
-  // console.log(message[0]);
+
+  const fetchMessages = async () => {
+    const token = localStorage.getItem("Token");
+    const response = await fetch(
+      `https://localhost/5000/api/messages/${selectedId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log(data);
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  }, [selectedId]);
   return (
     <div className="relative flex flex-col h-full">
       <div className="flex-grow">
