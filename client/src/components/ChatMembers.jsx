@@ -8,18 +8,12 @@ import {
 } from "../contexts/UserInfoContext";
 
 const ChatMembers = (props) => {
-  const { onlinePeople } = props;
+  const { onlinePeople, offlinePeople } = props;
   const { message, setMessage } = useContext(MessageToDisplayContext);
   const { userInfo } = useContext(UserInfoContext);
-  console.log(onlinePeople);
   const { selectedId, setSelectedId } = useContext(UserSelectionContext);
-  const onlinePeopleExcludingUser = { ...onlinePeople };
-  delete onlinePeopleExcludingUser[userInfo._id];
-  console.log(userInfo._id);
-  console.log(onlinePeopleExcludingUser[userInfo._id]);
-  console.log(onlinePeopleExcludingUser);
+
   const fetchMessages = async () => {
-    console.log("SelectedId", selectedId);
     const token = localStorage.getItem("Token");
     try {
       const response = await fetch(
@@ -31,11 +25,9 @@ const ChatMembers = (props) => {
           },
         }
       );
-      // console.log(response);
       if (response.ok) {
         const data = await response.json();
         setMessage(data);
-        console.log(data);
       } else {
         console.log(response);
       }
@@ -47,25 +39,48 @@ const ChatMembers = (props) => {
   useEffect(() => {
     fetchMessages();
   }, [selectedId]);
+
   return (
     <div>
       <Logo />
-      {onlinePeople &&
-        Object.keys(onlinePeopleExcludingUser).map((userId) => (
-          <div
-            onClick={() => setSelectedId(userId)}
-            key={userId}
-            className={
-              "flex gap-2 px-4 items-center p-2 mb-2 m-2 font-semibold text-xl shadow-sm cursor-pointer " +
-              (selectedId === userId
-                ? "bg-blue-50 border-l-8 border-blue-700 rounded-sm"
-                : "")
-            }
-          >
-            <Avatar username={onlinePeople[userId]} userId={userId} />
-            <div className="">{onlinePeople[userId]}</div>
-          </div>
-        ))}
+      {Object.keys(onlinePeople).map((userId) => (
+        <div
+          onClick={() => setSelectedId(userId)}
+          key={userId}
+          className={
+            "flex gap-2 px-4 items-center p-2 mb-2 m-2 font-semibold text-xl shadow-sm cursor-pointer " +
+            (selectedId === userId
+              ? "bg-blue-50 border-l-8 border-blue-700 rounded-sm"
+              : "")
+          }
+        >
+          <Avatar
+            username={onlinePeople[userId]}
+            userId={userId}
+            online={true}
+          />
+          <div className="">{onlinePeople[userId]}</div>
+        </div>
+      ))}
+      {Object.keys(offlinePeople).map((userId) => (
+        <div
+          onClick={() => setSelectedId(userId)}
+          key={userId}
+          className={
+            "flex gap-2 px-4 items-center p-2 mb-2 m-2 font-semibold text-xl shadow-sm cursor-pointer " +
+            (selectedId === userId
+              ? "bg-blue-50 border-l-8 border-blue-700 rounded-sm"
+              : "")
+          }
+        >
+          <Avatar
+            username={offlinePeople[userId].username}
+            userId={userId}
+            online={false}
+          />
+          <div className="">{offlinePeople[userId].username}</div>{" "}
+        </div>
+      ))}
     </div>
   );
 };

@@ -66,4 +66,9 @@ const logoutUser = expressAsyncHandler(async (req, res) => {
     res.clearCookie("token", options).status(200).json({ message: "Logged out successfully" });
 });
 
-module.exports = { registerUser, loginUser, logoutUser };
+const getAllUser = expressAsyncHandler(async (req, res) => {
+    const users = await User.find({}, { _id: 1, username: 1 });
+    res.json(users);
+})
+
+module.exports = { registerUser, loginUser, logoutUser, getAllUser };

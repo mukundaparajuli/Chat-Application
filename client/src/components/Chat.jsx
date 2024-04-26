@@ -10,6 +10,7 @@ import {
 const Chat = () => {
   const [ws, setWs] = useState(null);
   const [onlinePeople, setOnlinePeople] = useState({});
+  const [offlinePeople, setOfflinePeople] = useState({});
   const { setMessage } = useContext(MessageToDisplayContext);
   const { userInfo } = useContext(UserInfoContext);
   const { selectedId } = useContext(UserSelectionContext);
@@ -19,7 +20,9 @@ const Chat = () => {
     peopleArray.forEach(({ username, userId }) => {
       people[userId] = username;
     });
-    setOnlinePeople(people);
+    const onlinePeopleExcludingUser = { ...people };
+    delete onlinePeopleExcludingUser[userInfo._id];
+    setOnlinePeople(onlinePeopleExcludingUser);
   };
 
   const handleMessage = (ev) => {
@@ -33,10 +36,34 @@ const Chat = () => {
           message: messageData.message[0].message.textMessage,
           sender: messageData.sender,
           recipient: messageData.recipient,
-          // myId: userInfo._id,
           _id: Date.now(),
         },
       ]);
+    }
+  };
+
+  const showOfflinePeople = async () => {
+    const token = localStorage.getItem("Token");
+    try {
+      const response = await fetch("http://localhost:5000/api/user/people", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const offlineUsers = data
+          .filter((p) => p._id !== userInfo._id)
+          .filter((p) => !Object.keys(onlinePeople).includes(p._id));
+        console.log(offlineUsers);
+        const offlinePeople = {};
+        offlineUsers.forEach((p) => (offlinePeople[p._id] = p));
+        setOfflinePeople(offlinePeople);
+        console.log(offlinePeople);
+      }
+    } catch (err) {
+      console.log("An error has encountered fetching users: ", err);
     }
   };
 
@@ -53,56 +80,30 @@ const Chat = () => {
       newWs.close();
     };
   }, []);
+  useEffect(() => {
+    showOfflinePeople();
+  }, [onlinePeople]);
 
   useEffect(() => {
     const cleanup = connect();
     return cleanup;
   }, [connect]);
-  // const fetchMessages = async () => {
-  //   console.log(selectedId);
-  //   const token = localStorage.getItem("Token");
-  //   try {
-  //     const response = await fetch(
-  //       `http://localhost:5000/api/messages/${selectedId}`,
-  //       {
-  //         method: "GET",
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-  //     // console.log(response);
-  //     if (response.ok) {
-  //       const data = await response.json();
-  //       setMessage(data);
-  //       console.log(data);
-  //     } else {
-  //       console.log(response);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   console.log(selectedId);
-  //   fetchMessages();
-  // }, [selectedId]);
 
   const handleConnectionClose = () => {
-    // Handle WebSocket connection close
     console.log("WebSocket connection closed");
   };
 
   const handleConnectionError = (error) => {
-    // Handle WebSocket connection error
     console.error("WebSocket error:", error);
   };
 
   return (
     <div className="flex h-screen w-screen bg-black">
       <div className="bg-white w-1/3">
-        <ChatMembers onlinePeople={onlinePeople} />
+        <ChatMembers
+          onlinePeople={onlinePeople}
+          offlinePeople={offlinePeople}
+        />
       </div>
       <div className="bg-blue-200 w-2/3">
         <ChatMessages ws={ws} />
