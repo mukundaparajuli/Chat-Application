@@ -59,11 +59,7 @@ const loginUser = expressAsyncHandler(async (req, res) => {
 });
 
 const logoutUser = expressAsyncHandler(async (req, res) => {
-    const options = {
-        httpOnly: true,
-        secure: false,
-    };
-    res.clearCookie("token", options).status(200).json({ message: "Logged out successfully" });
+    res.json({ message: "Logged Out successfully" })
 });
 
 const getAllUser = expressAsyncHandler(async (req, res) => {

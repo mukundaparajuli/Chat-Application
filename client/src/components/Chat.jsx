@@ -99,7 +99,7 @@ const Chat = () => {
 
   return (
     <div className="flex h-screen w-screen bg-black">
-      <div className="bg-white w-1/3">
+      <div className="bg-white w-1/3 h-[100vh]">
         <ChatMembers
           onlinePeople={onlinePeople}
           offlinePeople={offlinePeople}

@@ -32,6 +32,32 @@ const server = app.listen(port, () => {
 const wss = new ws.WebSocketServer({ server });
 
 wss.on('connection', (connection, req) => {
+
+    const notifyOnConnection = () => {
+        [...wss.clients].forEach(client => {
+            client.send(JSON.stringify({
+                online: [...wss.clients].map(c => ({ userId: c.userId, username: c.username }))
+            }))
+        })
+    }
+
+    connection.isAlive = true;
+    connection.timer = setTimeout(() => {
+        connection.ping();
+        connection.deathTimer = setTimeout(() => {
+            connection.isAlive = false;
+            clearInterval(connection.timer);
+            connection.terminate();
+            notifyOnConnection();
+            console.log("Death")
+        }, 1000);
+    }, 5000);
+
+    connection.on('pong', () => {
+        clearTimeout(connection.deathTimer);
+    })
+
+
     console.log("New connection established");
     const url = new URL(req.url, `http://${req.headers.host}`);
     const token = url.searchParams.get("token");
@@ -84,9 +110,5 @@ wss.on('connection', (connection, req) => {
     });
 
     console.log([...wss.clients].user);
-    [...wss.clients].forEach(client => {
-        client.send(JSON.stringify({
-            online: [...wss.clients].map(c => ({ userId: c.userId, username: c.username }))
-        }))
-    })
+    notifyOnConnection();
 });
