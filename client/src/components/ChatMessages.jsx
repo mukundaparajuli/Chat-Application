@@ -5,91 +5,100 @@ import {
   UserSelectionContext,
 } from "../contexts/UserInfoContext";
 import { uniqBy } from "lodash";
+import axios from "axios";
 
 const ChatMessages = ({ ws }) => {
+  // Set the base URL for Axios requests
+  axios.defaults.baseURL = "http://localhost:5000";
+
+  // Get context values
   const { selectedId } = useContext(UserSelectionContext);
-  const [newMessageText, setNewMessageText] = useState("");
   const { message, setMessage } = useContext(MessageToDisplayContext);
   const { userInfo } = useContext(UserInfoContext);
+
+  // State for new message text
+  const [newMessageText, setNewMessageText] = useState("");
+
+  // Ref for scrolling to bottom
   const messagesEndRef = useRef(null);
 
+  // Function to scroll to the bottom of the chat
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
 
+  // Scroll to bottom when message changes
   useEffect(() => {
     scrollToBottom();
   }, [message]);
 
-  const handleMessageSubmit = (ev, file = null) => {
-    if (ev) ev.preventDefault();
-    // if (newMessageText.trim() !== "") {
-    // if (ws.readyState === WebSocket.OPEN) {
-    ws.send(
-      JSON.stringify({
-        message: {
-          recipient: selectedId,
-          textMessage: newMessageText,
-          file,
-        },
-      })
-    );
-    if (file) {
-      const getMessage = async () => {
+  // Function to handle message submission
+  const handleMessageSubmit = async (ev, file = null) => {
+    // ev.preventDefault();
+    try {
+      // Send message via WebSocket
+      ws.send(
+        JSON.stringify({
+          message: {
+            recipient: selectedId,
+            textMessage: newMessageText,
+            file,
+          },
+        })
+      );
+
+      // If a file is attached, fetch updated messages from the server
+      if (file) {
         const token = localStorage.getItem("Token");
-        try {
-          const response = await fetch(
-            `http://localhost:5000/api/messages/${selectedId}`,
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          if (response.ok) {
-            const data = await response.json();
-            setMessage(data);
-            console.log(data);
+        const response = await fetch(
+          `http://localhost:5000/api/messages/${selectedId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        } catch (err) {
-          console.log(err);
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setMessage(data);
         }
-      };
-      getMessage();
+      }
+
+      // Add message to local state
+      setMessage((prev) => [
+        ...prev,
+        {
+          message: newMessageText,
+          sender: userInfo._id,
+          recipient: selectedId,
+          file,
+          _id: Date.now(),
+        },
+      ]);
+
+      // Clear the input field
+      setNewMessageText("");
+    } catch (error) {
+      console.error("Error sending message:", error);
     }
-    setMessage((prev) => [
-      ...prev,
-      {
-        message: newMessageText,
-        sender: userInfo._id,
-        recipient: selectedId,
-        _id: Date.now(),
-      },
-    ]);
-    setNewMessageText("");
-    // } else {
-    //   console.error("WebSocket is not open!");
-    // }
-    // } else {
-    // console.error("Message text is empty!");
-    // }
   };
 
+  // Remove duplicate messages
   const messagesWithoutDupes = uniqBy(message, "_id");
 
+  // Function to handle file upload
   const sendFile = (ev) => {
     const reader = new FileReader();
-    console.log(reader);
     reader.readAsDataURL(ev.target.files[0]);
-    reader.onload = () => {
+    reader.addEventListener("load", () => {
       handleMessageSubmit(null, {
         name: ev.target.files[0].name,
         data: reader.result,
       });
-    };
+    });
   };
 
   return (
@@ -101,7 +110,6 @@ const ChatMessages = ({ ws }) => {
           </div>
         )}
       </div>
-      {console.log(message)}
       {!!selectedId && (
         <div className="overflow-y-auto flex-grow">
           {messagesWithoutDupes.map((messageItem, index) => {
@@ -125,7 +133,33 @@ const ChatMessages = ({ ws }) => {
                     <p className="text-lg">{messageItem.message}</p>
                     <p>Recipient: {messageItem.recipient}</p>
                     <p>Sender: {messageItem.sender}</p>
-                    {/* <p>My Id: {messageItem._id}</p> */}
+                    {messageItem.file && (
+                      <div className="">
+                        <a
+                          target="_blank"
+                          className="flex items-center gap-1 border-b"
+                          href={
+                            axios.defaults.baseURL +
+                            "/uploads/" +
+                            messageItem.file
+                          } // Construct the URL manually
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M18.97 3.659a2.25 2.25 0 00-3.182 0l-10.94 10.94a3.75 3.75 0 105.304 5.303l7.693-7.693a.75.75 0 011.06 1.06l-7.693 7.693a5.25 5.25 0 11-7.424-7.424l10.939-10.94a3.75 3.75 0 115.303 5.304L9.097 18.835l-.008.008-.007.007-.002.002-.003.002A2.25 2.25 0 015.91 15.66l7.81-7.81a.75.75 0 011.061 1.06l-7.81 7.81a.75.75 0 001.054 1.068L18.97 6.84a2.25 2.25 0 000-3.182z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          {messageItem.file}
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -133,6 +167,7 @@ const ChatMessages = ({ ws }) => {
               return null;
             }
           })}
+          <div ref={messagesEndRef} /> {/* Empty div for scrolling to bottom */}
         </div>
       )}
       {!!selectedId && (

@@ -12,14 +12,23 @@ const jwt = require("jsonwebtoken");
 const Message = require("./Models/messageSchema");
 const mongoose = require("mongoose");
 const fs = require("fs");
+// const path = require("path");
 
 databaseConnection();
 
 app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
-app.use("/api/user/", require("./router/userRoute"));
+app.use('/uploads', express.static(__dirname + '/uploads'))
+app.use("/api/user/", require("./uploads/userRoute"));
 app.use("/api/", require("./router/messageRoute"));
+app.use((req, res, next) => {
+    res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'none'; font-src 'self' http://localhost:5000;"
+    );
+    next();
+});
 
 app.get("/", (req, res) => {
     console.log(req.cookies);
@@ -79,24 +88,27 @@ wss.on('connection', (connection, req) => {
         [...wss.clients].forEach(c => console.log(c.userId));
         try {
             const messageDatas = JSON.parse(message.toString());
-            console.log("Received raw message:", message.toString());
-            console.log("Parsed message:", messageDatas);
+            // console.log("Received raw message:", message.toString());
+            // console.log("Parsed message:", messageDatas);
 
             if (messageDatas) {
+                console.log(messageDatas)
                 const { recipient, textMessage, file } = messageDatas.message;
+                let fileName = null;
                 if (file) {
                     const ext = file.name;
-                    const fileName = Date.now() + '.' + ext;
+                    fileName = Date.now() + '.' + ext;
                     const path = __dirname + '/uploads/' + fileName;
-                    const bufferData = new Buffer(file.data.split(',')[1], 'base64');
-                    fs.write(path, bufferData, () => {
-                        console.log("File saved at: ", path);
+                    const bufferData = Buffer.from(file.data.split(',')[1], 'base64');
+                    fs.writeFile(path, bufferData, () => {
+                        console.log('file saved:' + path);
                     })
                 }
                 const messageDocumented = await Message.create({
                     sender: connection.userId,
                     recipient: recipient,
                     message: textMessage,
+                    file: file ? fileName : null,
                 });
                 console.log(messageDocumented);
                 [...wss.clients]
@@ -106,7 +118,8 @@ wss.on('connection', (connection, req) => {
                                 message: [...wss.clients].map(c => (messageDatas)),
                                 sender: connection.userId,
                                 id: messageDocumented._id,
-                                recipient: messageDatas.message.recipient,
+                                recipient: messageDocumented.recipient,
+                                file: file ? fileName : null,
                             }))
                         }
                     });

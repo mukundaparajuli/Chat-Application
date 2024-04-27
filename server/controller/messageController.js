@@ -13,7 +13,6 @@ const getMessages = expressAsyncHandler(async (req, res) => {
         sender: { $in: [userId, ourUserId] },
         recipient: { $in: [userId, ourUserId] },
     }).sort({ createdAt: 1 });
-    console.log(messages)
     res.json(messages);
 })
 
