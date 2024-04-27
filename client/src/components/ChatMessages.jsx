@@ -23,69 +23,75 @@ const ChatMessages = ({ ws }) => {
     scrollToBottom();
   }, [message]);
 
-  const handleMessageSubmit = (ev) => {
-    ev.preventDefault();
-    if (newMessageText.trim() !== "") {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(
-          JSON.stringify({
-            message: {
-              recipient: selectedId,
-              textMessage: newMessageText,
-            },
-          })
-        );
-        setMessage((prev) => [
-          ...prev,
-          {
-            message: newMessageText,
-            // isMsgOurs: true,
-            sender: userInfo._id,
-            recipient: selectedId,
-            // myId: userInfo._id,
-            _id: Date.now(),
-          },
-        ]);
-        setNewMessageText("");
-      } else {
-        console.error("WebSocket is not open!");
-      }
-    } else {
-      console.error("Message text is empty!");
+  const handleMessageSubmit = (ev, file = null) => {
+    if (ev) ev.preventDefault();
+    // if (newMessageText.trim() !== "") {
+    // if (ws.readyState === WebSocket.OPEN) {
+    ws.send(
+      JSON.stringify({
+        message: {
+          recipient: selectedId,
+          textMessage: newMessageText,
+          file,
+        },
+      })
+    );
+    if (file) {
+      const getMessage = async () => {
+        const token = localStorage.getItem("Token");
+        try {
+          const response = await fetch(
+            `http://localhost:5000/api/messages/${selectedId}`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setMessage(data);
+            console.log(data);
+          }
+        } catch (err) {
+          console.log(err);
+        }
+      };
+      getMessage();
     }
+    setMessage((prev) => [
+      ...prev,
+      {
+        message: newMessageText,
+        sender: userInfo._id,
+        recipient: selectedId,
+        _id: Date.now(),
+      },
+    ]);
+    setNewMessageText("");
+    // } else {
+    //   console.error("WebSocket is not open!");
+    // }
+    // } else {
+    // console.error("Message text is empty!");
+    // }
   };
 
   const messagesWithoutDupes = uniqBy(message, "_id");
 
-  // const fetchMessages = async () => {
-  //   console.log(selectedId);
-  //   const token = localStorage.getItem("Token");
-  //   try {
-  //     const response = await fetch(
-  //       `http://localhost:5000/api/messages/${selectedId}`,
-  //       {
-  //         method: "GET",
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-  //     // console.log(response);
-  //     if (response.ok) {
-  //       const data = await response.json();
-  //       setMessage(data);
-  //       console.log(data);
-  //     } else {
-  //       console.log(response);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
+  const sendFile = (ev) => {
+    const reader = new FileReader();
+    console.log(reader);
+    reader.readAsDataURL(ev.target.files[0]);
+    reader.onload = () => {
+      handleMessageSubmit(null, {
+        name: ev.target.files[0].name,
+        data: reader.result,
+      });
+    };
+  };
 
-  // useEffect(() => {
-  //   fetchMessages();
-  // }, [selectedId]);
   return (
     <div className="relative flex flex-col h-full">
       <div className="flex-grow">
@@ -141,6 +147,32 @@ const ChatMessages = ({ ws }) => {
               className="p-2 w-full border bg-white text-slate-800 rounded-md"
               placeholder="Your message here"
             />
+            <label
+              htmlFor="file"
+              className="text-white bg-blue-500 p-2 rounded-md ml-2"
+            >
+              <input
+                type="file"
+                name="file"
+                id="file"
+                className="hidden"
+                onChange={sendFile}
+              />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13"
+                />
+              </svg>
+            </label>
             <button
               type="submit"
               className="text-white bg-blue-500 p-2 rounded-md ml-2"

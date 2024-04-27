@@ -11,6 +11,7 @@ const ws = require("ws");
 const jwt = require("jsonwebtoken");
 const Message = require("./Models/messageSchema");
 const mongoose = require("mongoose");
+const fs = require("fs");
 
 databaseConnection();
 
@@ -82,7 +83,16 @@ wss.on('connection', (connection, req) => {
             console.log("Parsed message:", messageDatas);
 
             if (messageDatas) {
-                const { recipient, textMessage } = messageDatas.message;
+                const { recipient, textMessage, file } = messageDatas.message;
+                if (file) {
+                    const ext = file.name;
+                    const fileName = Date.now() + '.' + ext;
+                    const path = __dirname + '/uploads/' + fileName;
+                    const bufferData = new Buffer(file.data.split(',')[1], 'base64');
+                    fs.write(path, bufferData, () => {
+                        console.log("File saved at: ", path);
+                    })
+                }
                 const messageDocumented = await Message.create({
                     sender: connection.userId,
                     recipient: recipient,

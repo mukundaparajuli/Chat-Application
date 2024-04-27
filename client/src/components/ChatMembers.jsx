@@ -49,7 +49,7 @@ const ChatMembers = (props) => {
         },
       });
       if (response.ok) {
-        const data = response.json();
+        const data = await response.json();
         console.log(data);
         localStorage.removeItem("Token");
         navigate("/login");
@@ -74,7 +74,7 @@ const ChatMembers = (props) => {
             className={
               "flex gap-2 px-4 items-center p-2 mb-2 m-2 font-semibold text-xl shadow-sm cursor-pointer " +
               (selectedId === userId
-                ? "bg-blue-50 border-l-8 border-blue-700 rounded-sm"
+                ? "bg-blue-50 border-l-8 border-blue-700 rounded-sm px-4"
                 : "")
             }
           >
