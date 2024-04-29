@@ -20,7 +20,7 @@ app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
 app.use('/uploads', express.static(__dirname + '/uploads'))
-app.use("/api/user/", require("./uploads/userRoute"));
+app.use("/api/user/", require("./router/userRoute"));
 app.use("/api/", require("./router/messageRoute"));
 app.use((req, res, next) => {
     res.setHeader(
@@ -93,8 +93,8 @@ wss.on('connection', (connection, req) => {
 
             if (messageDatas) {
                 console.log(messageDatas)
-                const { recipient, textMessage, file } = messageDatas.message;
                 let fileName = null;
+                const { recipient, textMessage, file } = messageDatas.message;
                 if (file) {
                     const ext = file.name;
                     fileName = Date.now() + '.' + ext;
@@ -119,7 +119,7 @@ wss.on('connection', (connection, req) => {
                                 sender: connection.userId,
                                 id: messageDocumented._id,
                                 recipient: messageDocumented.recipient,
-                                file: file ? fileName : null,
+                                file: messageDocumented.file,
                             }))
                         }
                     });

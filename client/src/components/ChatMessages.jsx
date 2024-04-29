@@ -36,7 +36,7 @@ const ChatMessages = ({ ws }) => {
 
   // Function to handle message submission
   const handleMessageSubmit = async (ev, file = null) => {
-    // ev.preventDefault();
+    if (ev) ev.preventDefault();
     try {
       // Send message via WebSocket
       ws.send(
@@ -64,20 +64,9 @@ const ChatMessages = ({ ws }) => {
         if (response.ok) {
           const data = await response.json();
           setMessage(data);
+          console.log("Data: ", data);
         }
       }
-
-      // Add message to local state
-      setMessage((prev) => [
-        ...prev,
-        {
-          message: newMessageText,
-          sender: userInfo._id,
-          recipient: selectedId,
-          file,
-          _id: Date.now(),
-        },
-      ]);
 
       // Clear the input field
       setNewMessageText("");
