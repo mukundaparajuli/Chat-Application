@@ -66,7 +66,19 @@ const ChatMessages = ({ ws }) => {
           setMessage(data);
           console.log("Data: ", data);
         }
+      } else {
+        setMessage((prev) => [
+          ...prev,
+          {
+            sender: userInfo._id,
+            recipient: selectedId,
+            message: newMessageText,
+            file: file ? file.name : null,
+            _id: Date.now(),
+          },
+        ]);
       }
+      console.log(message);
 
       // Clear the input field
       setNewMessageText("");
